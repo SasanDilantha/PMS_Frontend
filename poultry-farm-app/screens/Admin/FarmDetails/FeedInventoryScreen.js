@@ -1,71 +1,123 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useTheme } from '../../../theme/ThemeContext';
-import { useTranslation } from 'react-i18next';
-
-// Example data grouped by blocks
-const blocks = [
-  {
-    name: 'Block A',
-    feeds: [
-      { id: '1', supplier: 'Supplier A', type: 'Starter Feed', quantity: '500 kg', cost: 'Rs.20000', date: '2024-01-01', expireDate: '2024-06-01' },
-    ],
-  },
-  {
-    name: 'Block B',
-    feeds: [
-      { id: '2', supplier: 'Supplier B', type: 'Grower Feed', quantity: '300 kg', cost: 'Rs.15000', date: '2024-01-05', expireDate: '2024-06-05' },
-    ],
-  },
-  {
-    name: 'Block C',
-    feeds: [
-      { id: '3', supplier: 'Supplier C', type: 'Finisher Feed', quantity: '200 kg', cost: 'Rs.10000', date: '2024-01-10', expireDate: '2024-06-10' },
-    ],
-  },
-];
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useTheme } from "../../../theme/ThemeContext";
+import { useTranslation } from "react-i18next";
+import axios from "axios";
+import { BASE_URL } from "../../../services/bas_url";
 
 const FeedInventoryScreen = () => {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
+  const [inventory, setInventory] = useState([]);
+
+  // get all feed inventory details
+  useEffect(() => {
+    const allInventory = async () => {
+      try {
+        const response = await axios.get(
+          BASE_URL + ":8222/api/feed/all/inventory/details"
+        );
+        setInventory(response.data);
+        console.log("Inventory data:", response.data);
+      } catch (error) {
+        console.error("Error fetching inventory details:", error);
+      }
+    };
+
+    allInventory();
+  }, []);
+
   return (
-      <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-        {blocks.map((block, index) => (
-            <View key={index} style={[styles.blockCard, { backgroundColor: theme.cardBackground, shadowColor: theme.shadowColor }]}>
-              <Text style={[styles.blockTitle, { color: theme.primary }]}>{block.name}</Text>
-              {block.feeds.map((feed) => (
-                  <View key={feed.id} style={styles.feedDetails}>
-                    <View style={styles.detailRow}>
-                      <Icon name="food-apple" size={20} color={theme.iconColor} style={styles.icon} />
-                      <Text style={[styles.detailText, { color: theme.text }]}>{t('type')}: {feed.type}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Icon name="account" size={20} color={theme.iconColor} style={styles.icon} />
-                      <Text style={[styles.detailText, { color: theme.text }]}>{t('supplier')}: {feed.supplier}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Icon name="cube-outline" size={20} color={theme.iconColor} style={styles.icon} />
-                      <Text style={[styles.detailText, { color: theme.text }]}>{t('quantity')}: {feed.quantity}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Icon name="currency-usd" size={20} color={theme.iconColor} style={styles.icon} />
-                      <Text style={[styles.detailText, { color: theme.text }]}>{t('cost')}: {feed.cost}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Icon name="calendar" size={20} color={theme.iconColor} style={styles.icon} />
-                      <Text style={[styles.detailText, { color: theme.text }]}>{t('purchase_date')}: {feed.date}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <Icon name="calendar-clock" size={20} color={theme.iconColor} style={styles.icon} />
-                      <Text style={[styles.detailText, { color: theme.text }]}>{t('expire_date')}: {feed.expireDate}</Text>
-                    </View>
-                  </View>
-              ))}
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      {inventory.map((inv) => (
+        <View
+          key={inv.feed_inventory_id}
+          style={[
+            styles.blockCard,
+            {
+              backgroundColor: theme.cardBackground,
+              shadowColor: theme.shadowColor,
+            },
+          ]}
+        >
+          <Text style={[styles.blockTitle, { color: theme.primary }]}>
+            {inv.feed_inventory_code}
+          </Text>
+          <View style={styles.feedDetails}>
+            <View style={styles.detailRow}>
+              <Icon
+                name="food-apple"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("feed_type")}: {inv.feed_type}
+              </Text>
             </View>
-        ))}
-      </ScrollView>
+            <View style={styles.detailRow}>
+              <Icon
+                name="cube-outline"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("available_quantity")}: {inv.available_quantity} kg
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="currency-usd"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("expense_value")}: {inv.expense_value}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="account"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("supplier_name")}: {inv.supplier_name}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="phone"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("supplier_mobile")}: {inv.supplier_mobile}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="calendar"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("purchase_date")}: {inv.date}
+              </Text>
+            </View>
+          </View>
+        </View>
+      ))}
+    </ScrollView>
   );
 };
 
@@ -82,16 +134,16 @@ const styles = StyleSheet.create({
   },
   blockTitle: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   feedDetails: {
     marginBottom: 16,
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   icon: {

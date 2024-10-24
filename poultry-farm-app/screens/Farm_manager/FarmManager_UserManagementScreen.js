@@ -1,120 +1,199 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, FlatList, Modal, TouchableOpacity, Image, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useTheme } from '../../theme/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { BASE_URL } from "../../services/bas_url";
 
 const FarmManager_UserManagementScreen = () => {
-    const { theme } = useTheme();
-    const { t } = useTranslation(); // Initialize the translation hook
+  const { theme } = useTheme();
+  const { t } = useTranslation(); // Initialize the translation hook
 
-    const [employees, setEmployees] = useState([
-        { id: '1', name: 'John Doe', position: 'Farm Manager', email: 'john@example.com', phone: '1234567890', address: '123 Farm Road', farm: 'Happy Farm', works: 'Supervising', salary: 5000, role: 'Farm Manager', profilePicture: null },
-        { id: '2', name: 'Jane Smith', position: 'Farm Worker', email: 'jane@example.com', phone: '0987654321', address: '456 Farm Lane', farm: 'Happy Farm', works: 'Feeding', salary: 3000, role: 'Farm Employee', profilePicture: null },
-        { id: '3', name: 'Sam Green', position: 'Veterinarian', email: 'sam@example.com', phone: '1112223333', address: '789 Farm Street', farm: 'Sunshine Farm', works: 'Animal Health', salary: 4500, role: 'Veterinarian', profilePicture: null },
-        { id: '4', name: 'Emily White', position: 'Farm Worker', email: 'emily@example.com', phone: '4445556666', address: '101 Farm Blvd', farm: 'Sunshine Farm', works: 'Maintenance', salary: 2800, role: 'Farm Employee', profilePicture: null },
-        { id: '5', name: 'Michael Brown', position: 'Accountant', email: 'michael@example.com', phone: '7778889999', address: '102 Farm Rd', farm: 'Happy Farm', works: 'Finance', salary: 4000, role: 'Accountant', profilePicture: null },
-        { id: '6', name: 'Linda Blue', position: 'Farm Worker', email: 'linda@example.com', phone: '1122334455', address: '103 Farm St', farm: 'Happy Farm', works: 'Harvesting', salary: 2900, role: 'Farm Employee', profilePicture: null },
-    ]);
+  const [employees, setEmployees] = useState([]);
 
-    const [profileModalVisible, setProfileModalVisible] = useState(false);
-    const [callModalVisible, setCallModalVisible] = useState(false);
-    const [profilePictureToView, setProfilePictureToView] = useState(null);
-    const [selectedPhoneNumber, setSelectedPhoneNumber] = useState(null);
-
-    const farmName = 'Happy Farm';
-
-    const filteredEmployees = employees.filter(employee => employee.farm === farmName);
-
-    const initiateCall = (phoneNumber) => {
-        const phoneUrl = `tel:${phoneNumber}`;
-        Linking.openURL(phoneUrl).catch(err => console.error("Failed to make a call", err));
+  // get all users
+  useEffect(() => {
+    const allUsers = async () => {
+      try {
+        const response = await axios.get(BASE_URL+":8222/api/user/all/ui");
+        setEmployees(response.data);
+        console.log("Farms fetched successfully:", response.data);
+      } catch (error) {
+        console.error("Error fetching farms:", error);
+      }
     };
 
-    const renderEmployee = ({ item }) => (
-        <View key={item.id} style={[styles.card, { backgroundColor: theme.cardBackground }]}>
-            <TouchableOpacity onPress={() => { setProfilePictureToView(item.profilePicture); setProfileModalVisible(true); }} style={styles.profilePictureContainer}>
-                <Image source={item.profilePicture ? { uri: item.profilePicture.uri } : require('../../assets/default-profile.png')} style={styles.profilePicture} />
-            </TouchableOpacity>
-            <View style={styles.cardContent}>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('name')}: {item.name}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('position')}: {item.position}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('email')}: {item.email}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('phone')}: {item.phone}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('address')}: {item.address}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('farm')}: {item.farm}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('works')}: {item.works}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('salary')}: Rs.{item.salary}</Text>
-                <Text style={[styles.cardText, { color: theme.text }]}>{t('role')}: {item.role}</Text>
-            </View>
-            <TouchableOpacity onPress={() => { setSelectedPhoneNumber(item.phone); setCallModalVisible(true); }} style={styles.callButton}>
-                <Icon name="phone" size={24} color="#fff" />
-                <Text style={styles.callButtonText}>{t('call')}</Text>
-            </TouchableOpacity>
-        </View>
+    allUsers();
+  }, []);
+
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [callModalVisible, setCallModalVisible] = useState(false);
+  const [profilePictureToView, setProfilePictureToView] = useState(null);
+  const [selectedPhoneNumber, setSelectedPhoneNumber] = useState(null);
+
+  const farmName = "Happy Farm";
+
+  const filteredEmployees = employees.filter(
+    (employee) => employee.farm === farmName
+  );
+
+  const initiateCall = (phoneNumber) => {
+    const phoneUrl = `tel:${phoneNumber}`;
+    Linking.openURL(phoneUrl).catch((err) =>
+      console.error("Failed to make a call", err)
     );
+  };
 
-    return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
-            <Text style={[styles.message, { color: theme.text }]}>{t('user_management_for')} {farmName}</Text>
+  const renderEmployee = ({ item }) => (
+    <View
+      key={item.id}
+      style={[styles.card, { backgroundColor: theme.cardBackground }]}
+    >
+      <TouchableOpacity
+        onPress={() => {
+          setProfilePictureToView(item.profilePicture);
+          setProfileModalVisible(true);
+        }}
+        style={styles.profilePictureContainer}
+      >
+        <Image
+          source={
+            item.profilePicture
+              ? { uri: item.profilePicture.uri }
+              : require("../../assets/default-profile.png")
+          }
+          style={styles.profilePicture}
+        />
+      </TouchableOpacity>
+      <View style={styles.cardContent}>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("name")}: {item.name}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("position")}: {item.position}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("email")}: {item.email}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("phone")}: {item.phone}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("address")}: {item.address}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("farm")}: {item.farm}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("works")}: {item.works}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("salary")}: Rs.{item.salary}
+        </Text>
+        <Text style={[styles.cardText, { color: theme.text }]}>
+          {t("role")}: {item.role}
+        </Text>
+      </View>
+      <TouchableOpacity
+        onPress={() => {
+          setSelectedPhoneNumber(item.phone);
+          setCallModalVisible(true);
+        }}
+        style={styles.callButton}
+      >
+        <Icon name="phone" size={24} color="#fff" />
+        <Text style={styles.callButtonText}>{t("call")}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
-            <FlatList
-                data={filteredEmployees}
-                renderItem={renderEmployee}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.section}
+  return (
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Text style={[styles.message, { color: theme.text }]}>
+        {t("user_management_for")} {farmName}
+      </Text>
+
+      <FlatList
+        data={filteredEmployees}
+        renderItem={renderEmployee}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.section}
+      />
+
+      {/* Profile Picture Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={profileModalVisible}
+        onRequestClose={() => setProfileModalVisible(false)}
+      >
+        <View style={styles.profileModalContainer}>
+          <View
+            style={[
+              styles.profileModalView,
+              { backgroundColor: theme.cardBackground },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setProfileModalVisible(false)}
+            >
+              <Icon name="close" size={24} color={theme.text} />
+            </TouchableOpacity>
+            <Image
+              source={
+                profilePictureToView
+                  ? { uri: profilePictureToView.uri }
+                  : require("../../assets/default-profile.png")
+              }
+              style={styles.fullProfilePictureModalView}
             />
-
-            {/* Profile Picture Modal */}
-            <Modal
-                animationType="fade"
-                transparent={true}
-                visible={profileModalVisible}
-                onRequestClose={() => setProfileModalVisible(false)}
-            >
-                <View style={styles.profileModalContainer}>
-                    <View style={[styles.profileModalView, { backgroundColor: theme.cardBackground }]}>
-                        <TouchableOpacity style={styles.closeButton} onPress={() => setProfileModalVisible(false)}>
-                            <Icon name="close" size={24} color={theme.text} />
-                        </TouchableOpacity>
-                        <Image source={profilePictureToView ? { uri: profilePictureToView.uri } : require('../../assets/default-profile.png')} style={styles.fullProfilePictureModalView} />
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Call Confirmation Modal */}
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={callModalVisible}
-                onRequestClose={() => setCallModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={[styles.modalView, { backgroundColor: theme.cardBackground }]}>
-                        <Text style={[styles.modalTitle, { color: theme.text }]}>{t('confirm_call')}</Text>
-                        <Text style={{ color: theme.text }}>{t('do_you_want_to_call')} {selectedPhoneNumber}?</Text>
-                        <View style={styles.modalButtons}>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.cancelButton]}
-                                onPress={() => setCallModalVisible(false)}
-                            >
-                                <Text style={styles.buttonText}>{t('cancel')}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.modalButton, styles.confirmCallButton]}
-                                onPress={() => {
-                                    setCallModalVisible(false);
-                                    initiateCall(selectedPhoneNumber);
-                                }}
-                            >
-                                <Text style={styles.buttonText}>{t('call')}</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+          </View>
         </View>
-    );
+      </Modal>
+
+      {/* Call Confirmation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={callModalVisible}
+        onRequestClose={() => setCallModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View
+            style={[
+              styles.modalView,
+              { backgroundColor: theme.cardBackground },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              {t("confirm_call")}
+            </Text>
+            <Text style={{ color: theme.text }}>
+              {t("do_you_want_to_call")} {selectedPhoneNumber}?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setCallModalVisible(false)}
+              >
+                <Text style={styles.buttonText}>{t("cancel")}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmCallButton]}
+                onPress={() => {
+                  setCallModalVisible(false);
+                  initiateCall(selectedPhoneNumber);
+                }}
+              >
+                <Text style={styles.buttonText}>{t("call")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({

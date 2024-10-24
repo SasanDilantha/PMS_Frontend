@@ -48,44 +48,6 @@ const FarmDetailsScreen = ({ navigation }) => {
     fetchFarms(); // Call the fetch function
   }, []); // Empty dependency array ensures this runs only once when the component mounts
 
-  // useEffect(() => {
-  //   const getAllFarms = async () => {
-  //     try {
-  //       const response = await axios.get(
-  //         "http://172.17.74.147:8222/api/farm/get/all/details"
-  //       );
-  //       setFarms(response.data);
-  //       console.log("Farms fetched successfully:", response.data);
-  //     } catch (error) {
-  //       console.error(
-  //         "Failed to fetch farms:",
-  //         error.response?.data || error.message
-  //       );
-  //     }
-  //   };
-  //   getAllFarms();
-  // }, []);
-
-  //const token = await checkAndRefreshToken(); // Call the function to refresh the token
-  // const token = await AsyncStorage.getItem("access_token");
-
-  // try {
-  //   console.log("Token :" + token)
-  //   console.log("Fetching farms...");
-  //   const fetchAllFarms = await axios.get(
-  //     "http://172.17.74.147:8222/api/farm/get/all/details",
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     }
-  //   );
-  //   setFarms(fetchAllFarms.data);
-  //   console.log("Farms fetched successfully:", fetchAllFarms.data);
-  // } catch (error) {
-  //   console.error("Failed to fetch farms:", error);
-  // }
-
   const toggleAddModal = () => {
     setAddModalVisible(!isAddModalVisible);
   };

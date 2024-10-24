@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,8 +14,8 @@ import {
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useTheme } from "../../theme/ThemeContext";
-import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
+import { BASE_URL } from "../../services/bas_url";
 
 const UserManagementScreen = () => {
   const { theme } = useTheme();
@@ -23,251 +23,212 @@ const UserManagementScreen = () => {
   const [selectedFarm, setSelectedFarm] = useState(null);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(null);
+  const [allFarms, setAllFarms] = useState([]);
   const [items, setItems] = useState([
-    { label: "happy farm", value: "Happy Farm" },
-    { label: "sunshine farm", value: "Sunshine Farm" },
-  ]);
+    allFarms.map((farm) => ({
+      label: farm.farm_name,
+      value: farm.farm_code,
+    })),
+  ]); // set farms for deopdown
 
-  const [employees, setEmployees] = useState([
-    {
-      id: "1",
-      name: "John Doe",
-      position: "Farm Manager",
-      email: "john@example.com",
-      phone: "1234567890",
-      address: "123 Farm Road",
-      farm: "Happy Farm",
-      works: "Supervising",
-      salary: 5000,
-      role: "Farm Manager",
-      profilePicture: null,
-      username: "johndoe",
-      password: "password123",
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      position: "Farm Worker",
-      email: "jane@example.com",
-      phone: "0987654321",
-      address: "456 Farm Lane",
-      farm: "Happy Farm",
-      works: "Feeding",
-      salary: 3000,
-      role: "Farm Employee",
-      profilePicture: null,
-      username: "janesmith",
-      password: "password123",
-    },
-    {
-      id: "3",
-      name: "Sam Green",
-      position: "Veterinarian",
-      email: "sam@example.com",
-      phone: "1112223333",
-      address: "789 Farm Street",
-      farm: "Sunshine Farm",
-      works: "Animal Health",
-      salary: 4500,
-      role: "Veterinarian",
-      profilePicture: null,
-      username: "samgreen",
-      password: "password123",
-    },
-    {
-      id: "4",
-      name: "Emily White",
-      position: "Farm Worker",
-      email: "emily@example.com",
-      phone: "4445556666",
-      address: "101 Farm Blvd",
-      farm: "Sunshine Farm",
-      works: "Maintenance",
-      salary: 2800,
-      role: "Farm Employee",
-      profilePicture: null,
-      username: "emilywhite",
-      password: "password123",
-    },
-    {
-      id: "5",
-      name: "Michael Brown",
-      position: "Accountant",
-      email: "michael@example.com",
-      phone: "7778889999",
-      address: "102 Farm Rd",
-      farm: "Happy Farm",
-      works: "Finance",
-      salary: 4000,
-      role: "Accountant",
-      profilePicture: null,
-      username: "michaelbrown",
-      password: "password123",
-    },
-    {
-      id: "6",
-      name: "Linda Blue",
-      position: "Farm Worker",
-      email: "linda@example.com",
-      phone: "1122334455",
-      address: "103 Farm St",
-      farm: "Happy Farm",
-      works: "Harvesting",
-      salary: 2900,
-      role: "Farm Employee",
-      profilePicture: null,
-      username: "lindablue",
-      password: "password123",
-    },
-  ]);
+  // get all farms
+  useEffect(() => {
+    const getAllFarms = async () => {
+      try {
+        console.log("Fetching farms...");
+        const response = await axios.get(BASE_URL + ":8222/api/farm");
+        setAllFarms(response.data);
+        console.log("Farms fetched successfully:", response.data);
+      } catch (error) {
+        console.error("Error fetching farms:", error);
+      }
+    };
+
+    getAllFarms();
+  }, []);
+
+  const [employees, setEmployees] = useState([]);
+
+  // get all users
+  useEffect(() => {
+    const allUsers = async () => {
+      try {
+        const response = await axios.get(BASE_URL + ":8222/api/user/all/ui");
+        setEmployees(response.data);
+        console.log("Farms fetched successfully:", response.data);
+      } catch (error) {
+        console.error("Error fetching farms:", error);
+      }
+    };
+
+    allUsers();
+  }, []);
+
   const [modalVisible, setModalVisible] = useState(false);
-  const [detailsModalVisible, setDetailsModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [password, setPassword] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editEmployeeId, setEditEmployeeId] = useState(null);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
-  const [profileModalVisible, setProfileModalVisible] = useState(false);
-  const [profilePictureToView, setProfilePictureToView] = useState(null);
-  const [viewEmployee, setViewEmployee] = useState(null); // For viewing employee details
   const [newEmployee, setNewEmployee] = useState({
-    name: "",
-    position: "",
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
     address: "",
     farm: "",
-    works: "",
-    salary: "",
-    profilePicture: null,
     username: "",
     password: "",
+    farmCode: "",
+    role: "",
   });
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [roleDropdownValue, setRoleDropdownValue] = useState(null);
+  const [roleDropdownItems, setRoleDropdownItems] = useState([
+    { label: "MANAGER", value: "MANAGER" },
+    { label: "VET", value: "VET" },
+  ]);
+  const [farmCodeDropdownOpen, setFarmCodeDropdownOpen] = useState(false);
+  const [farmCodeDropdownValue, setFarmCodeDropdownValue] = useState(null);
+  const [farms, setFams] = useState([]);
+  const [farmCodeDropdownItems, setFarmCodeDropdownItems] = useState([
+    farms.map((farm) => ({
+      label: farm.farm_name,
+      value: farm.farm_code,
+    })),
+  ]);
+
+  // get all farms codes
+  useEffect(() => {
+    const getAllFarmsCodes = async () => {
+      try {
+        const response = await axios.get(BASE_URL + ":8222/api/farm");
+        setFams(response.data);
+        console.log("Farms fetched successfully:", response.data);
+      } catch (error) {
+        console.error("Error fetching farms:", error);
+      }
+    };
+
+    getAllFarmsCodes();
+  }, []);
+
   const [callModalVisible, setCallModalVisible] = useState(false);
   const [selectedPhoneNumber, setSelectedPhoneNumber] = useState(null);
+  const [detailsModalVisible, setDetailsModalVisible] = useState(false);
+  const [viewEmployee, setViewEmployee] = useState(null);
 
-  // this is for keycloak
-  const registerUserWithRole = async (username, email, password, roleName) => {
-    try {
-      // Create the user
-      const userResponse = await axios.post(
-        "http://localhost:8080/admin/realms/PoultryFarm/users",
-        {
-          username,
-          email,
-          enabled: true,
-          credentials: [
-            {
-              type: "password",
-              value: password,
-              temporary: false,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: "Bearer YOUR_ADMIN_ACCESS_TOKEN",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const userId = userResponse.data.id;
-
-      // Get the role ID for the role you want to assign (e.g., "manager")
-      const rolesResponse = await axios.get(
-        `http://localhost:8080/admin/realms/PoultryFarm/roles`
-      );
-      const role = rolesResponse.data.find((role) => role.name === roleName);
-
-      if (!role) {
-        throw new Error(`Role ${roleName} not found`);
-      }
-
-      // Assign the role to the user
-      await axios.post(
-        `http://localhost:8080/admin/realms/PoultryFarm/users/${userId}/role-mappings/realm`,
-        [role],
-        {
-          headers: {
-            Authorization: "Bearer YOUR_ADMIN_ACCESS_TOKEN",
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("User registered with role:", roleName);
-    } catch (error) {
-      console.error("Registration or role assignment failed:", error);
-    }
-  };
-
-  const handleAddEmployee = () => {
+  const handleAddEmployee = async () => {
     if (
-      !newEmployee.name ||
-      !newEmployee.position ||
+      !newEmployee.first_name ||
+      !newEmployee.last_name ||
       !newEmployee.email ||
       !newEmployee.phone ||
-      !newEmployee.address ||
-      !newEmployee.farm ||
-      !newEmployee.works ||
-      !newEmployee.salary ||
-      !newEmployee.username ||
-      !newEmployee.password
+      !newEmployee.password ||
+      !roleDropdownValue || // Role
+      !farmCodeDropdownValue // Farm code
     ) {
       Alert.alert(t("error"), t("fill_all_fields"));
       return;
     }
 
-    try {
-      // send data to keyckok
-      registerUserWithRole(
-        newEmployee.name,
-        newEmployee.email,
-        newEmployee.password,
-        newEmployee.position
-      );
-    } catch (err) {
-      console.log("RegError : " + err);
-    }
+    const employeeData = {
+      first_name: newEmployee.first_name,
+      last_name: newEmployee.last_name,
+      email: newEmployee.email,
+      phone: newEmployee.phone,
+      password: newEmployee.password,
+      role: roleDropdownValue,
+      farm_code: farmCodeDropdownValue,
+    };
 
-    if (isEditing) {
-      setEmployees(
-        employees.map((employee) =>
-          employee.id === editEmployeeId
-            ? { ...newEmployee, id: editEmployeeId }
-            : employee
-        )
-      );
-      setIsEditing(false);
-      setEditEmployeeId(null);
-    } else {
-      setEmployees([
-        ...employees,
-        { ...newEmployee, id: Date.now().toString() },
-      ]);
+    try {
+      const response = await fetch(BASE_URL + ":8222/api/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(employeeData),
+      });
+
+      if (response.ok) {
+        const createdEmployee = await response.json();
+        if (isEditing) {
+          setEmployees(
+            employees.map((employee) =>
+              employee.id === editEmployeeId
+                ? {
+                    ...newEmployee,
+                    id: editEmployeeId,
+                    role: roleDropdownValue,
+                    farmCode: farmCodeDropdownValue,
+                  }
+                : employee
+            )
+          );
+          setIsEditing(false);
+          setEditEmployeeId(null);
+        } else {
+          setEmployees([
+            ...employees,
+            {
+              ...newEmployee,
+              id: createdEmployee.id, // Use the id from the response
+              role: roleDropdownValue,
+              farmCode: farmCodeDropdownValue,
+            },
+          ]);
+        }
+
+        setNewEmployee({
+          first_name: "",
+          last_name: "",
+          email: "",
+          phone: "",
+          address: "",
+          farm: "",
+          username: "",
+          password: "",
+          farmCode: "",
+          role: "",
+        });
+        setRoleDropdownValue(null);
+        setFarmCodeDropdownValue(null);
+        setModalVisible(false);
+      } else {
+        Alert.alert("Error", "Failed to add employee");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong");
+      console.error(error);
     }
-    setNewEmployee({
-      name: "",
-      position: "",
-      email: "",
-      phone: "",
-      address: "",
-      farm: "",
-      works: "",
-      salary: "",
-      profilePicture: null,
-      username: "",
-      password: "",
-    });
-    setModalVisible(false);
   };
 
   const handleEditEmployee = (employee) => {
     setNewEmployee(employee);
+    setRoleDropdownValue(employee.role);
+    setFarmCodeDropdownValue(employee.farmCode);
     setEditEmployeeId(employee.id);
     setIsEditing(true);
+    setModalVisible(true);
+  };
+
+  const openAddEmployeeModal = () => {
+    setNewEmployee({
+      first_name: "",
+      last_name: "",
+      email: "",
+      phone: "",
+      address: "",
+      farm: "",
+      username: "",
+      password: "",
+      farmCode: "",
+      role: "",
+    });
+    setRoleDropdownValue(null);
+    setFarmCodeDropdownValue(null);
+    setIsEditing(false);
     setModalVisible(true);
   };
 
@@ -288,52 +249,18 @@ const UserManagementScreen = () => {
     setDeleteModalVisible(true);
   };
 
-  const selectProfilePicture = async () => {
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (permissionResult.granted === false) {
-      Alert.alert(t("permission_required"));
-      return;
-    }
-
-    const pickerResult = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!pickerResult.cancelled) {
-      setNewEmployee({
-        ...newEmployee,
-        profilePicture: { uri: pickerResult.uri },
-      });
-    }
-  };
-
-  const takeProfilePicture = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-    if (permissionResult.granted === false) {
-      Alert.alert(t("permission_required"));
-      return;
-    }
-
-    const pickerResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!pickerResult.cancelled) {
-      setNewEmployee({
-        ...newEmployee,
-        profilePicture: { uri: pickerResult.uri },
-      });
-    }
-  };
-
   const openCallConfirmation = (phoneNumber) => {
     setSelectedPhoneNumber(phoneNumber);
     setCallModalVisible(true);
+  };
+
+  const makeCall = (phoneNumber) => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
+  const openDetailsModal = (employee) => {
+    setViewEmployee(employee);
+    setDetailsModalVisible(true);
   };
 
   const renderEmployee = ({ item }) => (
@@ -341,44 +268,28 @@ const UserManagementScreen = () => {
       key={item.id}
       style={[styles.card, { backgroundColor: theme.cardBackground }]}
     >
-      <TouchableOpacity
-        onPress={() => {
-          setProfilePictureToView(item.profilePicture);
-          setProfileModalVisible(true);
-        }}
-      >
-        <Image
-          source={
-            item.profilePicture
-              ? { uri: item.profilePicture.uri }
-              : require("../../assets/default-profile.png")
-          }
-          style={styles.profilePicture}
-        />
-      </TouchableOpacity>
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Text style={[styles.cardLabel, { color: theme.text }]}>
+            {" "}
             {t("name")}:
           </Text>
           <Text style={[styles.cardText, { color: theme.text }]}>
-            {item.name}
+            {item.first_name} {item.last_name}
           </Text>
         </View>
         <View style={styles.cardHeader}>
           <Text style={[styles.cardLabel, { color: theme.text }]}>
-            {t("position")}:
+            {" "}
+            {t("role")}:
           </Text>
           <Text style={[styles.cardText, { color: theme.text }]}>
-            {item.position}
+            {item.role}
           </Text>
         </View>
         <View style={styles.cardActions}>
           <TouchableOpacity
-            onPress={() => {
-              setViewEmployee(item);
-              setDetailsModalVisible(true);
-            }}
+            onPress={() => openDetailsModal(item)}
             style={styles.detailsIcon}
           >
             <Icon name="eye" size={24} color={theme.primary} />
@@ -455,6 +366,7 @@ const UserManagementScreen = () => {
                 {t("farm")}: {selectedFarm}
               </Text>
               <Text style={[styles.summaryText, { color: theme.text }]}>
+                {" "}
                 {t("total_employees")}:{" "}
                 {
                   employees.filter((employee) => employee.farm === selectedFarm)
@@ -464,18 +376,10 @@ const UserManagementScreen = () => {
 
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={() => setModalVisible(true)}
+                onPress={openAddEmployeeModal}
               >
                 <Icon name="account-plus" size={24} color="#fff" />
                 <Text style={styles.buttonText}>{t("add_employee")}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={() => Alert.alert(t("get_report"))}
-              >
-                <Icon name="file-document" size={24} color="#fff" />
-                <Text style={styles.buttonText}>{t("get_report")}</Text>
               </TouchableOpacity>
             </View>
           }
@@ -506,25 +410,30 @@ const UserManagementScreen = () => {
             <Text style={[styles.modalTitle, { color: theme.text }]}>
               {isEditing ? t("edit_employee") : t("add_new_employee")}
             </Text>
-            <TouchableOpacity
-              onPress={selectProfilePicture}
-              style={styles.profilePictureContainer}
-            >
-              <Image
-                source={
-                  newEmployee.profilePicture
-                    ? { uri: newEmployee.profilePicture.uri }
-                    : require("../../assets/default-profile.png")
-                }
-                style={styles.profilePictureModal}
-              />
-              <Icon
-                name="pencil"
-                size={24}
-                color={theme.primary}
-                style={styles.profilePictureEditIcon}
-              />
-            </TouchableOpacity>
+
+            <DropDownPicker
+              open={farmCodeDropdownOpen}
+              value={farmCodeDropdownValue}
+              items={farmCodeDropdownItems}
+              setOpen={setFarmCodeDropdownOpen}
+              setValue={setFarmCodeDropdownValue}
+              setItems={setFarmCodeDropdownItems}
+              placeholder={t("select_farm_code")}
+              style={[
+                styles.picker,
+                {
+                  backgroundColor: theme.inputBackground,
+                  borderColor: theme.borderColor,
+                },
+              ]}
+              dropDownContainerStyle={{
+                backgroundColor: theme.inputBackground,
+                borderColor: theme.borderColor,
+              }}
+              textStyle={{ color: theme.inputText }}
+              placeholderStyle={{ color: theme.placeholderText }}
+              arrowIconStyle={{ tintColor: theme.text }}
+            />
             <TextInput
               style={[
                 styles.input,
@@ -533,11 +442,11 @@ const UserManagementScreen = () => {
                   color: theme.inputText,
                 },
               ]}
-              placeholder={t("name")}
+              placeholder={t("first_name")}
               placeholderTextColor={theme.placeholderText}
-              value={newEmployee.name}
+              value={newEmployee.first_name}
               onChangeText={(text) =>
-                setNewEmployee({ ...newEmployee, name: text })
+                setNewEmployee({ ...newEmployee, first_name: text })
               }
             />
             <TextInput
@@ -548,11 +457,11 @@ const UserManagementScreen = () => {
                   color: theme.inputText,
                 },
               ]}
-              placeholder={t("position")}
+              placeholder={t("last_name")}
               placeholderTextColor={theme.placeholderText}
-              value={newEmployee.position}
+              value={newEmployee.last_name}
               onChangeText={(text) =>
-                setNewEmployee({ ...newEmployee, position: text })
+                setNewEmployee({ ...newEmployee, last_name: text })
               }
             />
             <TextInput
@@ -602,36 +511,28 @@ const UserManagementScreen = () => {
                 setNewEmployee({ ...newEmployee, address: text })
               }
             />
-            <TextInput
+            <DropDownPicker
+              open={roleDropdownOpen}
+              value={roleDropdownValue}
+              items={roleDropdownItems}
+              setOpen={setRoleDropdownOpen}
+              setValue={setRoleDropdownValue}
+              setItems={setRoleDropdownItems}
+              placeholder={t("select_role")}
               style={[
-                styles.input,
+                styles.picker,
                 {
                   backgroundColor: theme.inputBackground,
-                  color: theme.inputText,
+                  borderColor: theme.borderColor,
                 },
               ]}
-              placeholder={t("works")}
-              placeholderTextColor={theme.placeholderText}
-              value={newEmployee.works}
-              onChangeText={(text) =>
-                setNewEmployee({ ...newEmployee, works: text })
-              }
-            />
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.inputBackground,
-                  color: theme.inputText,
-                },
-              ]}
-              placeholder={t("salary")}
-              placeholderTextColor={theme.placeholderText}
-              value={newEmployee.salary}
-              onChangeText={(text) =>
-                setNewEmployee({ ...newEmployee, salary: text })
-              }
-              keyboardType="numeric"
+              dropDownContainerStyle={{
+                backgroundColor: theme.inputBackground,
+                borderColor: theme.borderColor,
+              }}
+              textStyle={{ color: theme.inputText }}
+              placeholderStyle={{ color: theme.placeholderText }}
+              arrowIconStyle={{ tintColor: theme.text }}
             />
             <TextInput
               style={[
@@ -648,35 +549,23 @@ const UserManagementScreen = () => {
                 setNewEmployee({ ...newEmployee, username: text })
               }
             />
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: theme.inputBackground,
-                    color: theme.inputText,
-                    flex: 1,
-                  },
-                ]}
-                placeholder={t("password")}
-                placeholderTextColor={theme.placeholderText}
-                value={newEmployee.password}
-                onChangeText={(text) =>
-                  setNewEmployee({ ...newEmployee, password: text })
-                }
-                secureTextEntry={!passwordVisible} // Toggle visibility
-              />
-              <TouchableOpacity
-                onPress={() => setPasswordVisible(!passwordVisible)}
-                style={{ marginLeft: 10 }}
-              >
-                <Icon
-                  name={passwordVisible ? "eye-off" : "eye"}
-                  size={24}
-                  color={theme.primary}
-                />
-              </TouchableOpacity>
-            </View>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.inputBackground,
+                  color: theme.inputText,
+                },
+              ]}
+              placeholder={t("password")}
+              placeholderTextColor={theme.placeholderText}
+              value={newEmployee.password}
+              onChangeText={(text) =>
+                setNewEmployee({ ...newEmployee, password: text })
+              }
+              secureTextEntry
+            />
+
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -719,7 +608,8 @@ const UserManagementScreen = () => {
               {t("are_you_sure")}
             </Text>
             <Text style={{ color: theme.text }}>
-              {t("delete_employee_confirmation")} {employeeToDelete?.name}?
+              {t("delete_employee_confirmation")} {employeeToDelete?.first_name}{" "}
+              {employeeToDelete?.last_name}?
             </Text>
             <TextInput
               style={[
@@ -753,399 +643,6 @@ const UserManagementScreen = () => {
                 <Text style={styles.buttonText}>{t("yes")}</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Profile Picture Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={profileModalVisible}
-        onRequestClose={() => setProfileModalVisible(false)}
-      >
-        <View style={styles.profileModalContainer}>
-          <View
-            style={[
-              styles.profileModalView,
-              { backgroundColor: theme.cardBackground },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setProfileModalVisible(false)}
-            >
-              <Icon name="close" size={24} color={theme.text} />
-            </TouchableOpacity>
-            <Image
-              source={
-                profilePictureToView
-                  ? { uri: profilePictureToView.uri }
-                  : require("../../assets/default-profile.png")
-              }
-              style={styles.fullProfilePictureModalView}
-            />
-          </View>
-        </View>
-      </Modal>
-
-      {/* Employee Details Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={detailsModalVisible}
-        onRequestClose={() => setDetailsModalVisible(false)}
-      >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: "center",
-            alignItems: "center",
-            backgroundColor: "rgba(0,0,0,0.5)",
-          }}
-        >
-          <View
-            style={{
-              width: "90%",
-              borderRadius: 20,
-              padding: 35,
-              alignItems: "center",
-              backgroundColor: theme.cardBackground,
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "bold",
-                marginBottom: 20,
-                color: theme.text,
-              }}
-            >
-              {t("employee_details")}
-            </Text>
-
-            {viewEmployee && (
-              <>
-                <TouchableOpacity
-                  onPress={() => {
-                    setProfilePictureToView(viewEmployee.profilePicture);
-                    setProfileModalVisible(true);
-                  }}
-                >
-                  <Image
-                    source={
-                      viewEmployee.profilePicture
-                        ? { uri: viewEmployee.profilePicture.uri }
-                        : require("../../assets/default-profile.png")
-                    }
-                    style={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: 50,
-                      marginBottom: 16,
-                    }}
-                  />
-                </TouchableOpacity>
-
-                <View style={{ width: "100%", marginBottom: 20 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("name")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.name}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("position")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.position}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("email")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.email}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("phone")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.phone}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("address")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.address}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("works")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.works}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("salary")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >{`Rs.${viewEmployee.salary}`}</Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("role")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.role}
-                    </Text>
-                  </View>
-
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "space-between",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        flex: 1,
-                        textAlign: "right",
-                        paddingRight: 10,
-                        color: theme.text,
-                      }}
-                    >
-                      {t("username")}:
-                    </Text>
-                    <Text
-                      style={{
-                        flex: 2,
-                        fontSize: 16,
-                        textAlign: "left",
-                        color: theme.text,
-                      }}
-                    >
-                      {viewEmployee.username}
-                    </Text>
-                  </View>
-                </View>
-              </>
-            )}
-
-            <TouchableOpacity
-              style={{
-                padding: 10,
-                borderRadius: 8,
-                alignItems: "center",
-                marginHorizontal: 5,
-                marginTop: 20,
-                backgroundColor: "#757575",
-              }}
-              onPress={() => setDetailsModalVisible(false)}
-            >
-              <Text style={{ color: "#fff", fontSize: 16 }}>{t("ok")}</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1194,6 +691,63 @@ const UserManagementScreen = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Employee Details Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={detailsModalVisible}
+        onRequestClose={() => setDetailsModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View
+            style={[
+              styles.modalView,
+              { backgroundColor: theme.cardBackground },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              {t("employee_details")}
+            </Text>
+            {viewEmployee && (
+              <View style={styles.detailsContent}>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("name")}: {viewEmployee.first_name}{" "}
+                  {viewEmployee.last_name}
+                </Text>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("role")}: {viewEmployee.role}
+                </Text>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("email")}: {viewEmployee.email}
+                </Text>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("phone")}: {viewEmployee.phone}
+                </Text>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("address")}: {viewEmployee.address}
+                </Text>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("username")}: {viewEmployee.username}
+                </Text>
+                <Text style={[styles.detailsText, { color: theme.text }]}>
+                  {t("farm_code")}: {viewEmployee.farmCode}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[
+                styles.modalButton,
+                styles.cancelButton,
+                { marginTop: 20 },
+              ]}
+              onPress={() => setDetailsModalVisible(false)}
+            >
+              <Text style={styles.buttonText}>{t("close")}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -1212,9 +766,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     elevation: 3,
-  },
-  scrollContainer: {
-    paddingBottom: 20, // To make space for the content and buttons
   },
   button: {
     flexDirection: "row",
@@ -1278,6 +829,9 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     backgroundColor: "#757575",
+  },
+  deleteButton: {
+    backgroundColor: "#FF5722",
   },
   section: {
     paddingHorizontal: 16,
@@ -1343,51 +897,13 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
     marginTop: 120,
   },
-  profilePicture: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 16,
+  detailsContent: {
+    width: "100%",
+    marginBottom: 20,
   },
-  profilePictureContainer: {
-    position: "relative",
-  },
-  profilePictureEditIcon: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: "rgba(255, 255, 255, 0.7)",
-    borderRadius: 12,
-    padding: 2,
-  },
-  profilePictureModal: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 16,
-  },
-  profileModalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  profileModalView: {
-    width: 300,
-    height: 300,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  fullProfilePictureModalView: {
-    width: 250,
-    height: 250,
-  },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+  detailsText: {
+    fontSize: 16,
+    marginBottom: 8,
   },
 });
 

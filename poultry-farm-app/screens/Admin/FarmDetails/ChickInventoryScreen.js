@@ -3,48 +3,8 @@ import { View, Text, StyleSheet, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useTheme } from "../../../theme/ThemeContext";
 import { useTranslation } from "react-i18next";
-
-// const blocks = [
-//   {
-//     name: "Block A",
-//     chicks: [
-//       {
-//         id: "1",
-//         supplier: "Supplier A",
-//         breed: "Breed X",
-//         quantity: 150,
-//         cost: "Rs.3000.00",
-//         purchaseDate: "2024-01-01",
-//       },
-//     ],
-//   },
-//   {
-//     name: "Block B",
-//     chicks: [
-//       {
-//         id: "2",
-//         supplier: "Supplier B",
-//         breed: "Breed Y",
-//         quantity: 200,
-//         cost: "Rs.5000.00",
-//         purchaseDate: "2024-01-05",
-//       },
-//     ],
-//   },
-//   {
-//     name: "Block C",
-//     chicks: [
-//       {
-//         id: "3",
-//         supplier: "Supplier A",
-//         breed: "Breed Z",
-//         quantity: 250,
-//         cost: "Rs.5000.00",
-//         purchaseDate: "2024-01-10",
-//       },
-//     ],
-//   },
-// ];
+import axios from "axios";
+import { BASE_URL } from "../../../services/bas_url";
 
 const ChickInventoryScreen = () => {
   const { theme } = useTheme();
@@ -57,32 +17,25 @@ const ChickInventoryScreen = () => {
     const allInventory = async () => {
       try {
         const response = await axios.get(
-          uri + ":8222/api/chick/all/inventory/details"
+          BASE_URL + ":8222/api/chick//all/inventory/details"
         );
         setInventory(response.data);
-        console.log("employee count:", response.data);
+        console.log("Inventory data:", response.data);
       } catch (error) {
-        console.error("Error fetching farms:", error);
+        console.error("Error fetching inventory details:", error);
       }
     };
 
     allInventory();
   }, []);
 
-  const calculateAgeInDays = (purchaseDate) => {
-    const currentDate = new Date();
-    const purchaseDateObj = new Date(purchaseDate);
-    const differenceInTime = currentDate.getTime() - purchaseDateObj.getTime();
-    return Math.floor(differenceInTime / (1000 * 3600 * 24));
-  };
-
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {inventory.map((inv, index) => (
+      {inventory.map((inv) => (
         <View
-          key={index}
+          key={inv.chick_inventory_id}
           style={[
             styles.blockCard,
             {
@@ -94,77 +47,85 @@ const ChickInventoryScreen = () => {
           <Text style={[styles.blockTitle, { color: theme.primary }]}>
             {inv.chick_inventory_code}
           </Text>
-          {block.chicks.map((chick) => (
-            <View key={chick.id} style={styles.chickDetails}>
-              <View style={styles.detailRow}>
-                <Icon
-                  name="bird"
-                  size={20}
-                  color={theme.iconColor}
-                  style={styles.icon}
-                />
-                <Text style={[styles.detailText, { color: theme.text }]}>
-                  {t("breed")}: {chick.breed}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Icon
-                  name="account"
-                  size={20}
-                  color={theme.iconColor}
-                  style={styles.icon}
-                />
-                <Text style={[styles.detailText, { color: theme.text }]}>
-                  {t("supplier")}: {chick.supplier}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Icon
-                  name="cube-outline"
-                  size={20}
-                  color={theme.iconColor}
-                  style={styles.icon}
-                />
-                <Text style={[styles.detailText, { color: theme.text }]}>
-                  {t("quantity")}: {chick.quantity}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Icon
-                  name="currency-usd"
-                  size={20}
-                  color={theme.iconColor}
-                  style={styles.icon}
-                />
-                <Text style={[styles.detailText, { color: theme.text }]}>
-                  {t("cost")}: {chick.cost}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Icon
-                  name="calendar"
-                  size={20}
-                  color={theme.iconColor}
-                  style={styles.icon}
-                />
-                <Text style={[styles.detailText, { color: theme.text }]}>
-                  {t("purchase_date")}: {chick.purchaseDate}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Icon
-                  name="calendar-clock"
-                  size={20}
-                  color={theme.iconColor}
-                  style={styles.icon}
-                />
-                <Text style={[styles.detailText, { color: theme.text }]}>
-                  {t("age")}: {calculateAgeInDays(chick.purchaseDate)}{" "}
-                  {t("days")}
-                </Text>
-              </View>
+          <View style={styles.chickDetails}>
+            <View style={styles.detailRow}>
+              <Icon
+                name="bird"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("breed")}: {inv.chick_breed_name}
+              </Text>
             </View>
-          ))}
+            <View style={styles.detailRow}>
+              <Icon
+                name="cube-outline"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("available_quantity")}: {inv.available_quantity}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="currency-usd"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("expense_value")}: {inv.expense_value}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="calendar-clock"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("age")}: {inv.age} {t("days")}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="account"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("supplier_name")}: {inv.supplier_name}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="phone"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("supplier_mobile")}: {inv.supplier_mobile}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Icon
+                name="calendar"
+                size={20}
+                color={theme.iconColor}
+                style={styles.icon}
+              />
+              <Text style={[styles.detailText, { color: theme.text }]}>
+                {t("purchase_date")}: {inv.date}
+              </Text>
+            </View>
+          </View>
         </View>
       ))}
     </ScrollView>

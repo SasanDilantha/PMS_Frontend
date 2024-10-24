@@ -11,7 +11,7 @@ const uri = BASE_URL;
 const FarmDetailScreen = ({ route, navigation }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const [mgr, setMgr] = useState([]);
+  const [mgr, setMgr] = useState();
   const [empCount, setEmpCount] = useState(0);
   const { farm } = route.params;
 
